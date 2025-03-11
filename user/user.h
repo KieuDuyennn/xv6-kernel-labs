@@ -1,3 +1,5 @@
+#include "../kernel/types.h"
+
 struct stat;
 
 // system calls
@@ -22,6 +24,11 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int trace(int);     // Khai báo prototype cho function int trace(int mask)
+struct sysinfo;
+int sysinfo(struct sysinfo* );      // Khai báo prototype cho function int sysinfo(struct sysinfo* info)
+int list_process(void);     // Khai báo prototype cho function int list_running_process(void)
+int list_files(void);     // Khai báo prototype cho function int list_open_files(void)
 
 // ulib.c
 int stat(const char*, struct stat*);

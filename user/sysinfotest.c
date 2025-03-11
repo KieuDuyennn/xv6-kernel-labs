@@ -143,11 +143,28 @@ void testbad() {
 
 int
 main(int argc, char *argv[])
-{
+{ 
+  /*
   printf("sysinfotest: start\n");
   testcall();
   testmem();
   testproc();
   printf("sysinfotest: OK\n");
+  exit(0);
+  */
+
+  
+  struct sysinfo info;
+
+  if (sysinfo(&info) < 0) {
+    printf("sysinfo failed\n");
+    exit(1);
+  }
+
+  printf("Free memory: %ld byte(s)\n", info.freemem);
+  printf("Running process: %ld process(es)\n", info.nproc);
+  printf("Opened files: %ld file(s)\n", info.nopenfiles);
+  
+
   exit(0);
 }

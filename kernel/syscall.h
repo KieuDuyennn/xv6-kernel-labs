@@ -1,3 +1,7 @@
+// The number of system calls is defined in kernel/syscall.h:
+#define MAX_SYSTEMCALL 23
+#define MAX_MASK 2147483647
+
 // System call numbers
 #define SYS_fork    1
 #define SYS_exit    2
@@ -20,3 +24,7 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+#define SYS_trace  22    // Cấp số hiệu để tracing thông tin system call
+#define SYS_sysinfo 23  // Cấp số hiệu để lấy thông tin hệ thống
+#define SYS_list_process 24 // Cấp số hiệu để liệt kê các tiến trình đang chạy
+#define SYS_list_files 25 // Cấp số hiệu để liệt kê các file đang mở

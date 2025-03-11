@@ -288,6 +288,10 @@ fork(void)
     return -1;
   }
 
+  // Gán giá trị mask của process cha cho process con (kế thừa giá trị mask của cha)
+  // Giúp quá trình fork không bị mất tracing.
+  np->trace_mask = p->trace_mask;
+
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
     freeproc(np);

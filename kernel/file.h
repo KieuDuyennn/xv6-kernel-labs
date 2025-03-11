@@ -1,5 +1,14 @@
+#pragma once
+
+#include "sleeplock.h"  // Để dùng struct sleeplock
+#include "param.h"
+#define NDIRECT 12  // Số lượng file mở tối đa
+
+enum type_file { FD_NONE, FD_PIPE, FD_INODE, FD_DEVICE };
+
 struct file {
-  enum { FD_NONE, FD_PIPE, FD_INODE, FD_DEVICE } type;
+  //enum { FD_NONE, FD_PIPE, FD_INODE, FD_DEVICE } type;
+  enum type_file type;
   int ref; // reference count
   char readable;
   char writable;
@@ -8,6 +17,12 @@ struct file {
   uint off;          // FD_INODE
   short major;       // FD_DEVICE
 };
+
+struct ftable {
+  struct spinlock lock;
+  struct file file[NFILE];
+};
+
 
 #define major(dev)  ((dev) >> 16 & 0xFFFF)
 #define minor(dev)  ((dev) & 0xFFFF)
