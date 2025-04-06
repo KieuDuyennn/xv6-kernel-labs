@@ -6,6 +6,8 @@
 #include "spinlock.h"
 #include "proc.h"
 
+extern int pagetable_exec_flag;  // Được định nghĩa trong exec.c
+
 uint64
 sys_exit(void)
 {
@@ -122,4 +124,70 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64 
+sys_pgaccess(void) {
+  uint64 start_va;  // Địa chỉ ảo của trang đầu tiên
+  int num_pages;  // Số lượng trang cần kiểm tra
+  uint64 user_mask; // Địa chỉ của bitmask trong userspace
+
+  // Lấy tham số từ userspace
+  argaddr(0, &start_va);  // Lấy địa chỉ ảo của trang đầu tiên từ para đầu tiên
+  argint(1, &num_pages);  // Lấy số lượng trang cần kiểm tra từ para thứ hai
+  argaddr(2, &user_mask); // Lấy địa chỉ của bitmask từ para thứ ba
+
+  // Kiểm tra xem địa chỉ ảo có hợp lệ không
+  if (start_va >= MAXVA || start_va % PGSIZE != 0) {
+    // Nếu địa chỉ vượt quá MAXVA
+    // Nếu địa chỉ không căn chỉnh theo 4KB
+    return -1; 
+  }
+
+  // Kiểm tra xem số lượng trang có hợp lệ không
+  if (num_pages <= 0 || num_pages > MAXVA / PGSIZE) {
+    return -1; 
+  }
+
+  struct proc *p = myproc();
+  uint64 mask = 0;
+
+  for (int i = 0; i < num_pages; i++) {
+    pte_t * pte = walk(p->pagetable, start_va + i * PGSIZE, 0); // Tìm PTE
+
+    if (pte && (*pte & PTE_V)) { // Nếu PTE hợp lệ
+      if (*pte & PTE_A) { // Nếu trang đã được truy cập
+        mask |= (1ULL << i); // Đánh dấu bit trong mask
+        *pte &= ~PTE_A; // Giữ nguyên các bit khác trừ bit PTE_A bị đặt về 0
+      }
+    }
+  }  
+
+  // Sao chép bitmask về user space
+  if (copyout(p->pagetable, user_mask, (char *)&mask, sizeof(mask)) < 0) {
+    return -1; // Nếu không sao chép được
+  }
+
+  return 0; // Thành công
+}
+
+uint64
+sys_set_pgtbl(void) {
+  int flag_value;
+  argint(0, &flag_value);
+  
+  if (flag_value != 0 && flag_value != 1) {
+    return -1; // Nếu giá trị không hợp lệ
+  }
+
+  pagetable_exec_flag = flag_value;  // Cập nhật giá trị flag
+
+  if (flag_value) {
+    printf("The flag of pagetable_exec_flag is turned on\n");
+  }
+  else {
+    printf("The flag of pagetable_exec_flag is turned off\n");
+  }
+
+  return 0; // Trả về 0 để báo thành công
 }

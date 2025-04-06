@@ -9,6 +9,16 @@
 
 static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
 
+int pagetable_exec_flag = 0;  // Mặc định là không in bảng page table
+
+int my_strcmp(const char *s1, const char *s2) {
+  while (*s1 && (*s1 == *s2)) {
+      s1++;
+      s2++;
+  }
+  return *(unsigned char *)s1 - *(unsigned char *)s2;
+}
+
 int flags2perm(int flags)
 {
     int perm = 0;
@@ -127,6 +137,10 @@ exec(char *path, char **argv)
   p->trapframe->epc = elf.entry;  // initial program counter = main
   p->trapframe->sp = sp; // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
+
+  if (pagetable_exec_flag && my_strcmp(p->name, "set_pgtbl") != 0) {
+    vmprint(p->pagetable);
+  }
 
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 

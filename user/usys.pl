@@ -42,3 +42,5 @@ entry("send");
 entry("recv");
 entry("pgpte");
 entry("kpgtbl");
+entry("pgaccess");
+entry("set_pgtbl");

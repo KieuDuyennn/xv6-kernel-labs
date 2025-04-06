@@ -26,6 +26,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int pgaccess(void*, int, unsigned int*);
+int set_pgtbl(int);
 #ifdef LAB_NET
 int bind(uint32);
 int unbind(uint32);

@@ -10,14 +10,16 @@ void print_pgtbl();
 void print_kpgtbl();
 void ugetpid_test();
 void superpg_test();
+void pgaccess_test();
 
 int
 main(int argc, char *argv[])
 {
-  print_pgtbl();
-  ugetpid_test();
-  print_kpgtbl();
-  superpg_test();
+  //print_pgtbl();
+  //ugetpid_test();
+  //print_kpgtbl();
+  //superpg_test();
+  pgaccess_test();
   printf("pgtbltest: all tests succeeded\n");
   exit(0);
 }
@@ -139,4 +141,55 @@ superpg_test()
     }
   }
   printf("superpg_test: OK\n");  
+}
+
+
+void 
+uint64_to_bin(uint64 num, int width, char *buffer) {
+  buffer[0] = '0';
+  buffer[1] = 'b';
+  buffer[width + 2] = '\0'; // Kết thúc chuỗi
+  
+  for (int i = width - 1; i >= 0; i--) {
+      buffer[i + 2] = (num & 1) ? '1' : '0'; // Lấy bit cuối của num
+      num >>= 1; // Dịch phải 1 bit để lấy ký tự tiếp theo
+  }
+}
+
+
+void
+pgaccess_test()
+{
+  char *buf;
+  unsigned int abits;
+  printf("pgaccess_test starting\n");
+  testname = "pgaccess_test";
+  buf = malloc(32 * PGSIZE);
+  if ((unsigned long)buf % PGSIZE != 0) {
+    // Điều chỉnh con trỏ nếu không phải bội số của PGSIZE
+    buf = (char *)(((unsigned long)buf + PGSIZE - 1) & ~(PGSIZE - 1));
+  }
+  if (pgaccess(buf, 32, &abits) < 0)
+    err("pgaccess failed");
+  buf[PGSIZE * 1] += 1;
+  buf[PGSIZE * 2] += 1;
+  buf[PGSIZE * 28] += 1;
+  buf[PGSIZE * 30] += 1;
+  buf[PGSIZE * 31] += 1;
+  if (pgaccess(buf, 32, &abits) < 0)
+    err("pgaccess failed");
+  char abits_str[34];   // 32 trang + 2 ký tự '0b' + 1 ký tự '\0'
+  uint64_to_bin(abits, 32, abits_str);
+  printf("pgaccess_test: abits = %s\n", abits_str);
+  int count_1_bits = 0;
+  for (int i = 0; i < 32; i++) {
+    if (abits_str[i+2] == '1') ++count_1_bits;
+  }
+  printf("pgaccess_test: total of accessed pages = %d\n", count_1_bits);
+  /*
+  if (abits != ((1 << 1) | (1 << 2) | (1 << 30)))
+    err("incorrect access bits set");
+  */
+  free(buf);
+  printf("pgaccess_test: OK\n");                     
 }

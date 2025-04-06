@@ -488,9 +488,58 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 
 
 #ifdef LAB_PGTBL
+void 
+uint64_to_hex(uint64 num, int width, char *buffer) {
+  char hex_chars[] = "0123456789abcdef";
+  buffer[0] = '0';
+  buffer[1] = 'x';
+  buffer[width + 2] = '\0'; // Kết thúc chuỗi
+  
+  for (int i = width - 1; i >= 0; i--) {
+      buffer[i + 2] = hex_chars[num & 0xF]; // Lấy 4 bit cuối của num
+      num >>= 4; // Dịch phải 4 bit để lấy ký tự tiếp theo
+  }
+}
+
+void 
+recursive_vmprint(pagetable_t pagetable, int level) {
+  if (pagetable == 0) {
+    return;
+  }
+
+  for (int i = 0; i < PGSIZE / sizeof(pte_t); i++) {
+    pte_t pte = pagetable[i];   // Duyệt qua từng entry trong pagetable đó.
+
+    if (pte & PTE_V) {          // Nếu entry đó là hợp lệ
+      uint64 pa = PTE2PA(pte); // Từ entry đó, lấy địa chỉ vật lý của trang mà entry đó đang trỏ đến (ở level tiếp theo hoặc là của trang page thực sự).
+      
+      // In ra mức level bằng dấu ".."
+      for (int j = 0; j < level - 1; j++) {
+        printf(".. ");
+      }
+
+      char pte_hex_str[20], pa_hex_str[20];
+      uint64_to_hex(pte, 16, pte_hex_str);
+      uint64_to_hex(pa, 16, pa_hex_str);
+
+      printf("..%d: pte %s pa %s\n", i, pte_hex_str, pa_hex_str);
+
+      if ((pte & PTE_R) || (pte & PTE_W) || (pte & PTE_X)) {
+        // Đây là 1 leaf node (trỏ đến trang vật lý thực sự)
+        continue;
+      }
+
+      // Nếu không phải là leaf node, tiếp tục duyệt xuống page table con.
+      recursive_vmprint((pagetable_t)pa, level + 1);
+    }
+  }
+}
+
 void
 vmprint(pagetable_t pagetable) {
   // your code here
+  printf("page table %p\n", pagetable);
+  recursive_vmprint(pagetable, 1);
 }
 #endif
 
